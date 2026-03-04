@@ -1,0 +1,14 @@
+{
+  "permissions": {
+    "allow": [
+      "WebSearch",
+      "Bash(node:*)",
+      "Bash(npm view:*)",
+      "WebFetch(domain:www.omdbapi.com)",
+      "Bash(npm create:*)",
+      "Bash(npm install:*)",
+      "Bash(npx vite:*)",
+      "WebFetch(domain:www.npmjs.com)"
+    ]
+  }
+}
