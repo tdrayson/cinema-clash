@@ -3,11 +3,15 @@ import { ref, provide, computed, onMounted } from 'vue'
 import SearchBar from './components/SearchBar.vue'
 import ComparisonGrid from './components/ComparisonGrid.vue'
 import TrailerModal from './components/TrailerModal.vue'
+import CinemaModal from './components/CinemaModal.vue'
+import CinemaBar from './components/CinemaBar.vue'
 import { useComparison } from './composables/useComparison.js'
+import { tmdbFetch } from './utils/api.js'
 
-const { movies, loadFromUrl } = useComparison()
+const { movies, loadFromUrl, addMovie, setShowtimes } = useComparison()
 const trailerVideoId = ref(null)
 const searchBar = ref(null)
+const stickyHeader = ref(null)
 
 const filmCount = computed(() => movies.value.length)
 
@@ -21,7 +25,35 @@ function closeTrailer() {
 
 provide('openTrailer', openTrailer)
 
-onMounted(loadFromUrl)
+async function onAddCinemaFilms(films) {
+  for (const film of films) {
+    try {
+      const params = { query: film.name }
+      if (film.releaseYear) params.year = film.releaseYear
+      const data = await tmdbFetch('/search/movie', params)
+      if (data.results && data.results.length > 0) {
+        const tmdbId = data.results[0].id
+        await addMovie(tmdbId)
+        if (film.showtimes?.length) {
+          setShowtimes(tmdbId, film.showtimes)
+        }
+      }
+    } catch {
+      // skip films that can't be found
+    }
+  }
+}
+
+onMounted(() => {
+  loadFromUrl()
+  if (stickyHeader.value) {
+    const update = () => {
+      document.documentElement.style.setProperty('--sticky-header-h', stickyHeader.value.offsetHeight + 'px')
+    }
+    update()
+    new ResizeObserver(update).observe(stickyHeader.value)
+  }
+})
 </script>
 
 <template>
@@ -29,7 +61,7 @@ onMounted(loadFromUrl)
     <!-- Header -->
     <header class="border-b border-border">
       <div class="max-w-[1400px] mx-auto px-6 py-4 flex items-center justify-between">
-        <h1 class="font-serif text-xl text-ink">Cinema Clash</h1>
+        <h1 class="font-serif text-xl text-ink">CinemaSync</h1>
         <div class="flex items-center gap-4">
           <p class="hidden sm:block text-[10px] uppercase tracking-[0.25em] text-ink-lighter">
             Built by <a href="https://taylordrayson.com" target="_blank" rel="noopener" aria-label="Taylor Drayson (opens in a new tab)" class="text-ink hover:text-accent transition-colors">Taylor Drayson</a>
@@ -44,10 +76,13 @@ onMounted(loadFromUrl)
     </header>
 
     <!-- Secondary bar -->
-    <SearchBar ref="searchBar" />
+    <div ref="stickyHeader" class="sticky top-0 z-20 bg-cream">
+      <SearchBar ref="searchBar" />
+      <CinemaBar />
+    </div>
 
     <!-- Main -->
-    <main class="flex-1 max-w-[1400px] mx-auto px-6 py-8 w-full">
+    <main class="flex-1 py-8 w-full grid-breakout">
       <ComparisonGrid @add="searchBar?.openSearch()" />
     </main>
 
@@ -55,12 +90,13 @@ onMounted(loadFromUrl)
     <footer class="border-t border-border">
       <div class="max-w-[1400px] mx-auto px-6 py-4">
         <p class="text-[10px] uppercase tracking-widest text-ink-lighter">
-          Cinema Clash &middot; Film Comparison Tool
+          CinemaSync &middot; Film Comparison Tool
         </p>
       </div>
     </footer>
 
     <!-- Trailer Modal -->
     <TrailerModal :video-id="trailerVideoId" @close="closeTrailer" />
+    <CinemaModal @add-films="onAddCinemaFilms" />
   </div>
 </template>
