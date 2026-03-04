@@ -2,8 +2,24 @@
 import { inject } from 'vue'
 import RatingDisplay from './RatingDisplay.vue'
 
-defineProps({
+import { computed } from 'vue'
+
+const props = defineProps({
   movie: Object,
+  showtimes: Array,
+})
+
+const groupedShowtimes = computed(() => {
+  if (!props.showtimes?.length) return []
+  const map = new Map()
+  for (const st of props.showtimes) {
+    const key = st.cinema
+    if (!map.has(key)) {
+      map.set(key, { cinema: st.cinema, chain: st.chain, times: [] })
+    }
+    map.get(key).times.push(st.time)
+  }
+  return Array.from(map.values())
 })
 
 const emit = defineEmits(['remove'])
@@ -93,7 +109,7 @@ const openTrailer = inject('openTrailer')
       <span
         v-for="genre in movie.genres"
         :key="genre"
-        class="text-[10px] uppercase tracking-wide border border-border-dark text-ink px-2 py-0.5 font-medium"
+        class="text-[10px] uppercase tracking-wide border border-border text-ink px-2 py-0.5 font-medium"
       >
         {{ genre }}
       </span>
@@ -106,6 +122,32 @@ const openTrailer = inject('openTrailer')
 
     <!-- Ratings -->
     <RatingDisplay :ratings="movie.ratings" :overall="movie.overall" />
+
+    <!-- Showtimes -->
+    <div v-if="groupedShowtimes.length" class="border-t border-border pt-4 mt-4">
+      <p class="text-[10px] font-semibold text-ink-lighter uppercase tracking-widest mb-3">Showtimes</p>
+      <div class="space-y-3">
+        <div v-for="group in groupedShowtimes" :key="group.cinema">
+          <div class="flex items-center gap-1.5 mb-1.5">
+            <img
+              :src="group.chain === 'vue' ? '/icons/vue.png' : '/icons/cineworld.svg'"
+              :alt="group.chain"
+              class="max-w-4 max-h-4 aspect-square rounded shrink-0"
+            />
+            <span class="text-[11px] text-ink-lighter font-medium">{{ group.cinema }}</span>
+          </div>
+          <div class="flex flex-wrap gap-1.5">
+            <span
+              v-for="time in group.times"
+              :key="time"
+              class="inline-block px-2 py-0.5 text-xs border border-border-dark text-ink rounded"
+            >
+              {{ time }}
+            </span>
+          </div>
+        </div>
+      </div>
+    </div>
 
     <!-- Cast -->
     <div v-if="movie.cast.length" class="border-t border-border pt-4 mt-4">

@@ -1,17 +1,18 @@
-# Cinema Clash
+# CinemaSync
 
-A film comparison tool built with Vue 3. Search for movies, add them to a side-by-side grid, and compare ratings, cast, trailers, and more.
+A film comparison tool built with Vue 3. Search for movies, browse cinema showtimes, and compare ratings, cast, trailers, and more side-by-side.
 
-**[Live Demo](https://tdrayson.github.io/cinema-clash/)**
+**[Live Demo](https://tdrayson.github.io/cinema-sync/)**
 
 ## Features
 
-- **Search & Compare** — Search films with autocomplete and compare them side-by-side in a scrollable grid
-- **Aggregated Ratings** — Scores from IMDB, Rotten Tomatoes, and Metacritic with visual rating bars and an overall score
+- **Search & Compare** — Search films with autocomplete and compare them side-by-side in a horizontally scrollable, drag-to-scroll grid
+- **Cinema Showtimes** — Browse films showing at local cinemas (Vue, Cineworld) and add them with showtime data
+- **Aggregated Ratings** — Scores from IMDB, Rotten Tomatoes, and Metacritic with visual rating indicators and an overall score
 - **Trailers** — Watch YouTube trailers directly in the app
-- **Shareable Links** — Generate a URL with your selected films to share with others
+- **Shareable Links** — Share URLs encode both films and showtimes, with backwards compatibility for legacy links
 - **Sort** — Order films by score or the order they were added
-- **Responsive** — Works across desktop and mobile
+- **Responsive** — Mobile-friendly with a slide-out menu and full-screen cinema browser on small screens
 
 ## Tech Stack
 
@@ -19,6 +20,7 @@ A film comparison tool built with Vue 3. Search for movies, add them to a side-b
 - [Vite](https://vitejs.dev/)
 - [Tailwind CSS](https://tailwindcss.com/)
 - [Plyr](https://plyr.io/) (trailer playback)
+- [Cloudflare Workers](https://workers.cloudflare.com/) (cinema API proxy)
 
 ## Getting Started
 
@@ -32,8 +34,8 @@ You'll need API keys from:
 ### Installation
 
 ```bash
-git clone https://github.com/tdrayson/cinema-clash.git
-cd cinema-clash
+git clone https://github.com/tdrayson/cinema-sync.git
+cd cinema-sync
 npm install
 ```
 
@@ -46,6 +48,7 @@ cp .env.example .env
 ```
 VITE_TMDB_API_KEY=your_tmdb_key
 VITE_OMDB_API_KEY=your_omdb_key
+VITE_CINEMA_PROXY_URL=your_worker_url
 ```
 
 ### Development
@@ -86,22 +89,28 @@ Then in your GitHub repo settings, set Pages to deploy from the `docs/` folder o
 ```
 src/
 ├── components/
-│   ├── ComparisonGrid.vue    # Scrollable film grid
+│   ├── ComparisonGrid.vue    # Scrollable film grid with drag-to-scroll
 │   ├── MovieCard.vue         # Individual film card
 │   ├── RatingDisplay.vue     # Ratings section
-│   ├── RatingBar.vue         # Single rating bar
-│   ├── SearchBar.vue         # Search input, sort, and share controls
+│   ├── RatingBar.vue         # Single rating row with box indicators
+│   ├── SearchBar.vue         # Search input, sort, and mobile menu
 │   ├── SearchResultItem.vue  # Search dropdown item
 │   ├── ShareButton.vue       # Share modal with copy options
+│   ├── CinemaModal.vue       # Cinema browser and film picker
+│   ├── CinemaBar.vue         # Active cinema selection bar
+│   ├── DatePicker.vue        # Date selector for showtimes
 │   └── TrailerModal.vue      # Trailer video player
 ├── composables/
-│   ├── useComparison.js      # Film list state, sorting, sharing
+│   ├── useComparison.js      # Film list state, sorting, sharing, URL encoding
+│   ├── useCinema.js          # Cinema selection and showtime state
 │   ├── useMovieSearch.js     # Search and popular films
 │   └── useMovieDetails.js    # Fetch film details from APIs
 ├── utils/
 │   ├── api.js                # TMDB and OMDB API wrappers
+│   ├── cinema-api.js         # Cinema API with in-memory caching
 │   └── ratings.js            # Rating normalisation
 ├── App.vue
 ├── main.js
 └── style.css
+worker/                       # Cloudflare Worker for cinema API proxy
 ```

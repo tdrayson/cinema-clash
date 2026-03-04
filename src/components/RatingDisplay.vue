@@ -5,6 +5,11 @@ defineProps({
   ratings: Array,
   overall: Number,
 })
+
+function toBoxes(score) {
+  if (score === null) return 0
+  return Math.max(1, Math.round((score / 100) * 5))
+}
 </script>
 
 <template>
@@ -18,6 +23,7 @@ defineProps({
           :label="r.label"
           :score="r.score"
           :display="r.display"
+          :filled="toBoxes(r.score)"
           :color="r.color"
         />
       </div>

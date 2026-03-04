@@ -4,11 +4,31 @@ import { fetchMovieDetails } from './useMovieDetails.js'
 const movies = ref([])
 const loadingIds = ref(new Set())
 const sortOrder = ref(localStorage.getItem('sortOrder') || 'none')
+const movieShowtimes = ref(new Map())
 
 function buildUrl(ids) {
   const base = window.location.origin + window.location.pathname
   if (!ids.length) return base
-  return `${base}?films=${ids.join(',')}`
+
+  const data = { f: ids }
+
+  const showtimesObj = {}
+  for (const id of ids) {
+    const st = movieShowtimes.value.get(id)
+    if (st && st.length) {
+      showtimesObj[id] = st.map(({ cinema, chain, time }) => ({
+        c: cinema,
+        ch: chain,
+        t: time,
+      }))
+    }
+  }
+  if (Object.keys(showtimesObj).length) {
+    data.s = showtimesObj
+  }
+
+  const hash = btoa(JSON.stringify(data))
+  return `${base}#${hash}`
 }
 
 function updateUrl() {
@@ -25,7 +45,7 @@ function getShareMessage() {
   const titles = movies.value.map((m) => m.title)
   const url = getShareUrl()
   if (!titles.length) return url
-  return `Check out ${titles.length === 1 ? 'this film' : 'these films'} on Cinema Clash: ${titles.join(', ')} — ${url}`
+  return `Check out ${titles.length === 1 ? 'this film' : 'these films'} on CinemaSync: ${titles.join(', ')} — ${url}`
 }
 
 export function useComparison() {
@@ -55,11 +75,50 @@ export function useComparison() {
     }
   }
 
+  function setShowtimes(tmdbId, showtimes) {
+    const next = new Map(movieShowtimes.value)
+    next.set(tmdbId, showtimes)
+    movieShowtimes.value = next
+  }
+
   function removeMovie(tmdbId) {
     movies.value = movies.value.filter((m) => m.id !== tmdbId)
+    if (movieShowtimes.value.has(tmdbId)) {
+      const next = new Map(movieShowtimes.value)
+      next.delete(tmdbId)
+      movieShowtimes.value = next
+    }
+  }
+
+  function clearMovies() {
+    movies.value = []
+    movieShowtimes.value = new Map()
   }
 
   function loadFromUrl() {
+    const hash = window.location.hash.slice(1)
+    if (hash) {
+      try {
+        const data = JSON.parse(atob(hash))
+        const ids = data.f || []
+        for (const id of ids) {
+          addMovie(id)
+        }
+        if (data.s) {
+          for (const [movieId, showtimes] of Object.entries(data.s)) {
+            setShowtimes(
+              Number(movieId),
+              showtimes.map((st) => ({ cinema: st.c, chain: st.ch, time: st.t }))
+            )
+          }
+        }
+        return
+      } catch {
+        // invalid hash, fall through to legacy format
+      }
+    }
+
+    // Legacy format: ?films=550,278
     const params = new URLSearchParams(window.location.search)
     const filmsParam = params.get('films')
     if (!filmsParam) return
@@ -71,11 +130,12 @@ export function useComparison() {
 
   // Keep URL in sync
   watch(movies, updateUrl, { deep: true })
+  watch(movieShowtimes, updateUrl, { deep: true })
   watch(sortOrder, (val) => localStorage.setItem('sortOrder', val))
 
   return {
-    movies, sortedMovies, loadingIds, sortOrder,
-    addMovie, removeMovie, loadFromUrl,
+    movies, sortedMovies, loadingIds, sortOrder, movieShowtimes,
+    addMovie, removeMovie, clearMovies, loadFromUrl, setShowtimes,
     getShareUrl, getShareMessage,
   }
 }
