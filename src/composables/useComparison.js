@@ -3,7 +3,7 @@ import { fetchMovieDetails } from './useMovieDetails.js'
 
 const movies = ref([])
 const loadingIds = ref(new Set())
-const sortOrder = ref('none')
+const sortOrder = ref(localStorage.getItem('sortOrder') || 'none')
 
 function buildUrl(ids) {
   const base = window.location.origin + window.location.pathname
@@ -71,6 +71,7 @@ export function useComparison() {
 
   // Keep URL in sync
   watch(movies, updateUrl, { deep: true })
+  watch(sortOrder, (val) => localStorage.setItem('sortOrder', val))
 
   return {
     movies, sortedMovies, loadingIds, sortOrder,

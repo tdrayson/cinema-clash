@@ -60,7 +60,10 @@ const openTrailer = inject('openTrailer')
         <span class="font-serif text-3xl text-accent leading-none">{{ movie.overall }}</span>
         <span class="text-sm text-ink-lighter ml-1">/100</span>
       </template>
-      <span v-else class="font-serif text-3xl text-ink-lighter leading-none">N/A</span>
+      <template v-else>
+        <span class="font-serif text-3xl text-ink-lighter leading-none">N/A</span>
+        <span class="text-sm text-ink-lighter ml-1">/ 100</span>
+      </template>
     </div>
 
     <!-- Title -->
