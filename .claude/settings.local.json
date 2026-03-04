@@ -9,7 +9,19 @@
       "Bash(npm install:*)",
       "Bash(npx vite:*)",
       "WebFetch(domain:www.npmjs.com)",
-      "Bash(git remote:*)"
+      "Bash(git remote:*)",
+      "WebFetch(domain:www.cineworld.co.uk)",
+      "Bash(ls:*)",
+      "WebFetch(domain:www.myvue.com)",
+      "Bash(curl:*)",
+      "Bash(python3:*)",
+      "Bash(file:*)",
+      "Bash(npm run:*)",
+      "Bash(git branch:*)",
+      "Bash(git push:*)",
+      "Bash(gh repo:*)",
+      "Bash(git add:*)",
+      "Bash(git commit:*)"
     ]
   }
 }
