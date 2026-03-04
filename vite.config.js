@@ -4,5 +4,6 @@ import tailwindcss from '@tailwindcss/vite'
 
 export default defineConfig({
   base: '/cinema-clash/',
+  build: { outDir: 'docs' },
   plugins: [vue(), tailwindcss()],
 })
