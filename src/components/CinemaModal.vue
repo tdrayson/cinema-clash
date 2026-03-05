@@ -216,7 +216,7 @@ watch(showModal, async (val) => {
       @keydown="onKeydown"
     >
       <div class="fixed inset-0 bg-ink/40 hidden sm:block" aria-hidden="true" @click="closeModal" />
-      <div class="relative bg-cream sm:border sm:border-border-dark shadow-xl w-full sm:max-w-xl flex flex-col h-full sm:h-auto sm:max-h-[600px]">
+      <div class="relative bg-cream sm:border sm:border-border-dark shadow-xl w-full sm:max-w-xl flex flex-col h-full sm:h-[600px]">
         <!-- Header -->
         <div class="flex items-center justify-between px-5 py-4 border-b border-border shrink-0">
           <div class="flex items-center gap-3">

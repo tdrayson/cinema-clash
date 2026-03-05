@@ -6,10 +6,7 @@ const loadingIds = ref(new Set())
 const sortOrder = ref(localStorage.getItem('sortOrder') || 'none')
 const movieShowtimes = ref(new Map())
 
-function buildUrl(ids) {
-  const base = window.location.origin + window.location.pathname
-  if (!ids.length) return base
-
+function encodeData(ids) {
   const data = { f: ids }
 
   const showtimesObj = {}
@@ -27,8 +24,17 @@ function buildUrl(ids) {
     data.s = showtimesObj
   }
 
-  const hash = btoa(JSON.stringify(data))
-  return `${base}#${hash}`
+  return btoa(JSON.stringify(data))
+}
+
+function buildUrl(ids) {
+  const base = window.location.origin + window.location.pathname
+  if (!ids.length) return base
+  return `${base}?d=${encodeURIComponent(encodeData(ids))}`
+}
+
+function parseData(encoded) {
+  return JSON.parse(atob(decodeURIComponent(encoded)))
 }
 
 function updateUrl() {
@@ -95,31 +101,43 @@ export function useComparison() {
     movieShowtimes.value = new Map()
   }
 
+  function loadSharedData(data) {
+    const ids = data.f || []
+    for (const id of ids) {
+      addMovie(id)
+    }
+    if (data.s) {
+      for (const [movieId, showtimes] of Object.entries(data.s)) {
+        setShowtimes(
+          Number(movieId),
+          showtimes.map((st) => ({ cinema: st.c, chain: st.ch, time: st.t }))
+        )
+      }
+    }
+  }
+
   function loadFromUrl() {
+    const params = new URLSearchParams(window.location.search)
+
+    // Current format: ?d=<base64>
+    const dParam = params.get('d')
+    if (dParam) {
+      try {
+        loadSharedData(parseData(dParam))
+        return
+      } catch { /* invalid, fall through */ }
+    }
+
+    // Legacy hash format: #<base64>
     const hash = window.location.hash.slice(1)
     if (hash) {
       try {
-        const data = JSON.parse(atob(hash))
-        const ids = data.f || []
-        for (const id of ids) {
-          addMovie(id)
-        }
-        if (data.s) {
-          for (const [movieId, showtimes] of Object.entries(data.s)) {
-            setShowtimes(
-              Number(movieId),
-              showtimes.map((st) => ({ cinema: st.c, chain: st.ch, time: st.t }))
-            )
-          }
-        }
+        loadSharedData(parseData(hash))
         return
-      } catch {
-        // invalid hash, fall through to legacy format
-      }
+      } catch { /* invalid, fall through */ }
     }
 
     // Legacy format: ?films=550,278
-    const params = new URLSearchParams(window.location.search)
     const filmsParam = params.get('films')
     if (!filmsParam) return
     const ids = filmsParam.split(',').map(Number).filter(Boolean)
