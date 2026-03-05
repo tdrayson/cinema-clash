@@ -7,7 +7,14 @@ import { useComparison } from '../composables/useComparison.js'
 import { useCinema } from '../composables/useCinema.js'
 
 const { query, results, popular, loading } = useMovieSearch()
-const { addMovie, sortOrder, movies, clearMovies } = useComparison()
+const { addMovie, sortOrder, movies, clearMovies, movieShowtimes, showtimesOnly } = useComparison()
+
+const hasAnyShowtimes = computed(() => {
+  for (const st of movieShowtimes.value.values()) {
+    if (st && st.length > 0) return true
+  }
+  return false
+})
 const { showModal: showCinema } = useCinema()
 const open = ref(false)
 const searchInput = ref(null)
@@ -52,8 +59,6 @@ function openSearch() {
 
 function onSelect(tmdbId) {
   addMovie(tmdbId)
-  query.value = ''
-  results.value = []
   searchInput.value?.focus()
 }
 
@@ -150,6 +155,18 @@ defineExpose({ openSearch })
           </select>
         </div>
 
+        <label
+          v-if="hasAnyShowtimes"
+          class="flex items-center gap-1.5 cursor-pointer select-none"
+        >
+          <input
+            type="checkbox"
+            v-model="showtimesOnly"
+            class="accent-ink cursor-pointer"
+          />
+          <span class="text-xs text-ink-lighter">Showtimes only</span>
+        </label>
+
         <button
           v-if="movies.length"
           @click="showClearConfirm = true"
@@ -176,7 +193,7 @@ defineExpose({ openSearch })
       <!-- Mobile menu button -->
       <button
         @click="showPanel = true"
-        class="sm:hidden p-2 text-ink/60 hover:text-ink transition-colors cursor-pointer ml-auto"
+        class="sm:hidden text-ink/60 hover:text-ink transition-colors cursor-pointer ml-auto"
         aria-label="Open menu"
       >
         <svg class="w-5 h-5" viewBox="0 0 20 20" fill="currentColor">
@@ -220,6 +237,19 @@ defineExpose({ openSearch })
               <option value="asc">Score: low to high</option>
             </select>
           </div>
+
+          <!-- Showtimes only -->
+          <label
+            v-if="hasAnyShowtimes"
+            class="flex items-center gap-2 mt-4 cursor-pointer select-none"
+          >
+            <input
+              type="checkbox"
+              v-model="showtimesOnly"
+              class="accent-ink cursor-pointer"
+            />
+            <span class="text-xs text-ink-lighter">Showtimes only</span>
+          </label>
 
           <!-- Clear All -->
           <button

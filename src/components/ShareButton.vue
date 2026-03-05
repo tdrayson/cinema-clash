@@ -144,7 +144,7 @@ async function copyMessage() {
 
           <div class="border-t border-border pt-4">
             <p class="text-[11px] uppercase tracking-widest text-ink/50 mb-2">Message</p>
-            <p class="text-sm text-ink/80 leading-relaxed break-words whitespace-pre-wrap mb-3">{{ getShareMessage() }}</p>
+            <p class="text-sm text-ink/80 leading-relaxed break-words whitespace-pre-wrap mb-3">{{ getShareMessage(true) }}</p>
             <button
               @click="copyMessage"
               class="border border-border-dark px-3 py-1.5 text-xs uppercase tracking-widest font-medium text-ink hover:bg-ink hover:text-cream transition-colors cursor-pointer flex items-center gap-1.5"

@@ -78,6 +78,10 @@ export function useCinema() {
     )
   }
 
+  function setSelectedCinemas(cinemaList) {
+    selectedCinemas.value = cinemaList
+  }
+
   function clear() {
     selectedCinemas.value = []
     mergedFilms.value = []
@@ -97,6 +101,7 @@ export function useCinema() {
     toggleCinema,
     setDate,
     filterCinemas,
+    setSelectedCinemas,
     clear,
   }
 }

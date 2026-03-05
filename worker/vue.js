@@ -59,15 +59,26 @@ export async function fetchFilms(rawId, date) {
   if (!res.ok) throw new Error(`Vue films: ${res.status}`)
   const data = await res.json()
 
+  const VUE_SCREEN_ATTRS = new Set(['atmos', 'imax', '3d', 'laser', 'hdr', 'biggest-screen', 'epic', 'Lux', 'ultra-lux-and-lux', '4dx', 'screenx'])
+
   return (data.result || [])
     .map(film => {
       const group = (film.showingGroups || []).find(g => g.date.startsWith(date))
+
       const showtimes = group
-        ? (group.sessions || []).map(s => ({
-            time: s.startTime.includes('T') ? s.startTime.split('T')[1].slice(0, 5) : s.startTime,
-            soldOut: s.isSoldOut || false,
-            bookingLink: s.bookingUrl || null,
-          }))
+        ? (group.sessions || []).map(s => {
+            const attrs = s.attributes || []
+            const screenAttr = attrs.find(a => VUE_SCREEN_ATTRS.has(a.value))
+            const screenType = screenAttr
+              ? (screenAttr.shortName || screenAttr.name)
+              : '2D'
+            return {
+              time: s.startTime.includes('T') ? s.startTime.split('T')[1].slice(0, 5) : s.startTime,
+              screenType,
+              soldOut: s.isSoldOut || false,
+              bookingLink: s.bookingUrl || null,
+            }
+          })
         : []
 
       const year = film.releaseDate ? new Date(film.releaseDate).getFullYear() : null

@@ -2,8 +2,10 @@
 import { ref, computed, onMounted, onBeforeUnmount, watch, nextTick } from 'vue'
 import MovieCard from './MovieCard.vue'
 import { useComparison } from '../composables/useComparison.js'
+import { useCinema } from '../composables/useCinema.js'
 
 const { sortedMovies, loadingIds, removeMovie, movieShowtimes } = useComparison()
+const { showModal: showCinemaModal } = useCinema()
 
 defineEmits(['add'])
 
@@ -86,6 +88,63 @@ watch([sortedMovies, loadingIds], () => nextTick(checkOverflow))
 
 <template>
   <div>
+    <!-- Empty state: onboarding -->
+    <template v-if="!sortedMovies.length && !loadingIds.size">
+      <div class="max-w-xl mx-auto px-6 py-12 text-center">
+        <h2 class="font-serif text-3xl text-ink mb-2">Compare films, side by side</h2>
+        <p class="text-sm text-ink-light leading-relaxed mb-8">
+          CinemaSync pulls ratings from TMDB, IMDb, Rotten Tomatoes and Metacritic into one view — plus live showtimes from Vue and Cineworld cinemas.
+        </p>
+
+        <div class="flex flex-col sm:flex-row gap-4 justify-center">
+          <button
+            @click="$emit('add')"
+            class="flex items-center justify-center gap-2.5 border border-border-dark px-6 py-3 text-xs uppercase tracking-widest font-medium text-ink hover:bg-ink hover:text-cream transition-colors cursor-pointer"
+          >
+            <svg class="w-4 h-4" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5">
+              <circle cx="8" cy="8" r="6" />
+              <path d="M6 8h4M8 6v4" />
+            </svg>
+            Search for a Film
+          </button>
+          <button
+            @click="showCinemaModal = true"
+            class="flex items-center justify-center gap-2.5 border border-border-dark px-6 py-3 text-xs uppercase tracking-widest font-medium text-ink hover:bg-ink hover:text-cream transition-colors cursor-pointer"
+          >
+            <svg class="w-4 h-4" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5">
+              <rect x="2" y="4" width="12" height="9" rx="1" />
+              <path d="M4 4V3a1 1 0 011-1h6a1 1 0 011 1v1" />
+              <path d="M2 7h12" />
+            </svg>
+            Find Films by Cinema
+          </button>
+        </div>
+
+        <div class="mt-10 flex items-center gap-4 justify-center text-ink-lighter">
+          <div class="h-px bg-border flex-1 max-w-16" />
+          <span class="text-[10px] uppercase tracking-widest font-medium">How it works</span>
+          <div class="h-px bg-border flex-1 max-w-16" />
+        </div>
+
+        <div class="mt-6 grid grid-cols-1 sm:grid-cols-3 gap-6 text-left">
+          <div>
+            <p class="text-xs font-medium text-ink uppercase tracking-wider mb-1">1. Add Films</p>
+            <p class="text-xs text-ink-lighter leading-relaxed">Search by title or browse what's showing at your local cinema.</p>
+          </div>
+          <div>
+            <p class="text-xs font-medium text-ink uppercase tracking-wider mb-1">2. Compare</p>
+            <p class="text-xs text-ink-lighter leading-relaxed">See ratings, cast, trailers and showtimes side by side.</p>
+          </div>
+          <div>
+            <p class="text-xs font-medium text-ink uppercase tracking-wider mb-1">3. Share</p>
+            <p class="text-xs text-ink-lighter leading-relaxed">Send a link to friends so everyone can decide together.</p>
+          </div>
+        </div>
+      </div>
+    </template>
+
+    <!-- Films loaded -->
+    <template v-else>
     <!-- Title & scroll arrows -->
     <div class="max-w-[1400px] mx-auto px-6 flex items-center justify-between mb-2">
       <h2 v-if="sortedMovies.length" class="font-serif text-2xl text-ink">
@@ -159,8 +218,8 @@ watch([sortedMovies, loadingIds], () => nextTick(checkOverflow))
 
     <!-- Add film placeholder -->
     <div class="w-72 shrink-0 self-start">
-      <div class="flex justify-end mb-1">
-        <span class="text-lg leading-none invisible">&times;</span>
+      <div class="flex justify-end mb-1 -mr-1">
+        <div class="w-6 h-6 m-0.5" aria-hidden="true" />
       </div>
       <button
         @click="$emit('add')"
@@ -176,5 +235,6 @@ watch([sortedMovies, loadingIds], () => nextTick(checkOverflow))
     </div>
     <div class="grid-breakout-spacer shrink-0" aria-hidden="true"></div>
     </div>
+    </template>
   </div>
 </template>

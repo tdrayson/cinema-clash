@@ -102,12 +102,27 @@ async function handleFilms(idString, date) {
 
   const results = await Promise.all(fetches)
 
-  // Merge by normalised title
+  // Merge by normalised title (exact match or substring containment)
   const titleMap = new Map()
+
+  function findMatchingKey(normTitle) {
+    // Exact match first
+    if (titleMap.has(normTitle)) return normTitle
+    // Check if any existing key contains this title or vice versa
+    for (const existing of titleMap.keys()) {
+      if (existing.includes(normTitle) || normTitle.includes(existing)) {
+        return existing
+      }
+    }
+    return null
+  }
+
   for (const { cinemaId, chain, films } of results) {
     for (const film of films) {
-      const key = normaliseTitle(film.title)
-      if (!titleMap.has(key)) {
+      const normTitle = normaliseTitle(film.title)
+      let key = findMatchingKey(normTitle)
+      if (!key) {
+        key = normTitle
         titleMap.set(key, {
           title: film.title,
           posterUrl: film.posterUrl || null,
@@ -117,6 +132,10 @@ async function handleFilms(idString, date) {
         })
       }
       const entry = titleMap.get(key)
+      // Prefer the shorter/cleaner title
+      if (film.title.length < entry.title.length) {
+        entry.title = film.title
+      }
       if (!entry.posterUrl && film.posterUrl) entry.posterUrl = film.posterUrl
       if (!entry.durationMins && film.durationMins) entry.durationMins = film.durationMins
       if (!entry.releaseYear && film.releaseYear) entry.releaseYear = film.releaseYear

@@ -10,17 +10,35 @@ const props = defineProps({
   showtimes: Array,
 })
 
+function resolveBookingLink(chain, link) {
+  if (!link) return null
+  if (link.startsWith('http')) return link
+  if (chain === 'vue') return `https://www.myvue.com${link}`
+  return link
+}
+
 const groupedShowtimes = computed(() => {
   if (!props.showtimes?.length) return []
   const map = new Map()
   for (const st of props.showtimes) {
     const key = st.cinema
     if (!map.has(key)) {
-      map.set(key, { cinema: st.cinema, chain: st.chain, times: [] })
+      map.set(key, { cinema: st.cinema, chain: st.chain, screenTypes: new Map() })
     }
-    map.get(key).times.push(st.time)
+    const group = map.get(key)
+    const screenType = st.screenType || '2D'
+    if (!group.screenTypes.has(screenType)) {
+      group.screenTypes.set(screenType, [])
+    }
+    group.screenTypes.get(screenType).push({
+      time: st.time,
+      bookingLink: resolveBookingLink(st.chain, st.bookingLink),
+    })
   }
-  return Array.from(map.values())
+  return Array.from(map.values()).map(g => ({
+    ...g,
+    screenTypes: Array.from(g.screenTypes.entries()),
+  }))
 })
 
 const emit = defineEmits(['remove'])
@@ -137,14 +155,25 @@ const openTrailer = inject('openTrailer')
             />
             <span class="text-[11px] text-ink-lighter font-medium">{{ group.cinema }}</span>
           </div>
-          <div class="flex flex-wrap gap-1.5">
-            <span
-              v-for="time in group.times"
-              :key="time"
-              class="inline-block px-2 py-0.5 text-xs border border-border-dark text-ink rounded"
-            >
-              {{ time }}
-            </span>
+          <div
+            v-for="[screenType, times] in group.screenTypes"
+            :key="screenType"
+            class="mb-1.5 last:mb-0"
+          >
+            <p v-if="screenType" class="text-[10px] uppercase tracking-wider text-ink-lighter font-medium mb-1">{{ screenType }}</p>
+            <div class="flex flex-wrap gap-1.5">
+              <a
+                v-for="t in times"
+                :key="t.time"
+                :href="t.bookingLink"
+                :target="t.bookingLink ? '_blank' : undefined"
+                rel="noopener noreferrer"
+                class="inline-block px-2 py-0.5 text-xs border border-border-dark text-ink rounded transition-colors"
+                :class="t.bookingLink ? 'hover:bg-ink hover:text-cream cursor-pointer' : ''"
+              >
+                {{ t.time }}
+              </a>
+            </div>
           </div>
         </div>
       </div>

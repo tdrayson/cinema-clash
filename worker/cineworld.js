@@ -41,12 +41,14 @@ export async function fetchFilms(rawId, date) {
   for (const film of films) {
     filmMap.set(film.id, {
       title: film.name,
-      posterUrl: film.posterLink || null,
+      posterUrl: film.posterLink && !film.posterLink.includes('placeholder') ? film.posterLink : null,
       durationMins: film.length || null,
       releaseYear: film.releaseYear || null,
       showtimes: [],
     })
   }
+
+  const SCREEN_TYPES = new Set(['4dx', 'imax', 'screenx', 'superscreen'])
 
   for (const event of events) {
     const film = filmMap.get(event.filmId)
@@ -54,8 +56,11 @@ export async function fetchFilms(rawId, date) {
     const dt = new Date(event.eventDateTime)
     const hh = String(dt.getUTCHours()).padStart(2, '0')
     const mm = String(dt.getUTCMinutes()).padStart(2, '0')
+    const attrs = event.attributeIds || []
+    const screenType = attrs.find(a => SCREEN_TYPES.has(a))?.toUpperCase() || '2D'
     film.showtimes.push({
       time: `${hh}:${mm}`,
+      screenType,
       soldOut: event.soldOut || false,
       bookingLink: event.bookingLink || null,
     })
