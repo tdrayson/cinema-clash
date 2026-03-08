@@ -1,3 +1,5 @@
+<img width="1198" height="628" alt="Screenshot 2026-03-08 at 00 39 21" src="https://github.com/user-attachments/assets/4c44ce63-8547-4346-bb0a-a5b7947eb76f" />
+
 # CinemaSync
 
 A film comparison tool built with Vue 3. Search for movies, browse cinema showtimes, and compare ratings, cast, trailers, and more side-by-side.
