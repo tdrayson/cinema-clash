@@ -42,6 +42,8 @@ const mobileDrawerOpen = ref(false)
 const pendingDate = ref(null)
 const showDateConfirm = ref(false)
 
+const lightboxPoster = ref(null)
+
 // Generic confirmation dialog
 const showConfirm = ref(false)
 const confirmTitle = ref('')
@@ -342,6 +344,15 @@ function cancelDateChange() {
   pendingDate.value = null
 }
 
+function openPosterLightbox(posterUrl, title) {
+  if (!posterUrl) return
+  lightboxPoster.value = { posterUrl, title }
+}
+
+function closePosterLightbox() {
+  lightboxPoster.value = null
+}
+
 function addFilms() {
   // Group selected showtimes by film
   const filmMap = new Map()
@@ -624,12 +635,21 @@ watch(showModal, async (val) => {
               >
                 <div class="flex items-start gap-3">
                   <!-- Poster -->
-                  <img
+                  <button
                     v-if="film.posterUrl"
-                    :src="film.posterUrl"
-                    :alt="film.title"
-                    class="w-10 h-14 object-cover shrink-0 border border-border"
-                  />
+                    type="button"
+                    @click.stop="openPosterLightbox(film.posterUrl, film.title)"
+                    class="group/poster relative w-10 h-14 shrink-0 border border-border overflow-hidden focus:outline-none focus-visible:ring-2 focus-visible:ring-ink/70 cursor-zoom-in"
+                    aria-label="Open larger poster in lightbox"
+                    :title="`Click to enlarge poster for ${film.title}`"
+                  >
+                    <img
+                      :src="film.posterUrl"
+                      :alt="film.title"
+                      class="w-full h-full object-cover"
+                    />
+                    <div class="pointer-events-none absolute inset-0 bg-black/10 opacity-0 group-hover/poster:opacity-100 transition-opacity" />
+                  </button>
                   <div v-else class="w-10 h-14 shrink-0 border border-border bg-cream-dark flex items-center justify-center">
                     <svg class="w-5 h-5 text-ink-lighter" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
                       <rect x="3" y="5" width="18" height="14" rx="1" />
@@ -823,12 +843,21 @@ watch(showModal, async (val) => {
                 class="group/film-row px-4 py-3 border-b border-border last:border-b-0"
               >
                 <div class="flex items-start gap-2.5">
-                  <img
+                  <button
                     v-if="film.posterUrl"
-                    :src="film.posterUrl"
-                    :alt="film.title"
-                    class="w-8 h-12 object-cover shrink-0 border border-border"
-                  />
+                    type="button"
+                    @click.stop="openPosterLightbox(film.posterUrl, film.title)"
+                    class="group/poster relative w-8 h-12 shrink-0 border border-border overflow-hidden focus:outline-none focus-visible:ring-2 focus-visible:ring-ink/70 cursor-zoom-in"
+                    aria-label="Open larger poster in lightbox"
+                    :title="`Click to enlarge poster for ${film.title}`"
+                  >
+                    <img
+                      :src="film.posterUrl"
+                      :alt="film.title"
+                      class="w-full h-full object-cover"
+                    />
+                    <div class="pointer-events-none absolute inset-0 bg-black/10 opacity-0 group-hover/poster:opacity-100 transition-opacity" />
+                  </button>
                   <div v-else class="w-8 h-12 shrink-0 border border-border bg-cream-dark flex items-center justify-center">
                     <svg class="w-4 h-4 text-ink-lighter" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
                       <rect x="3" y="5" width="18" height="14" rx="1" />
@@ -891,6 +920,33 @@ watch(showModal, async (val) => {
             </button>
           </div>
         </div>
+      </div>
+    </div>
+  </Teleport>
+
+  <!-- Poster lightbox -->
+  <Teleport to="body">
+    <div
+      v-if="lightboxPoster"
+      class="fixed inset-0 z-[60] flex items-center justify-center p-4"
+    >
+      <div class="fixed inset-0 bg-ink/70" @click="closePosterLightbox" />
+      <div class="relative max-w-md w-auto">
+        <button
+          type="button"
+          @click="closePosterLightbox"
+          class="absolute -top-8 right-0 text-cream hover:text-white text-sm uppercase tracking-widest cursor-pointer"
+        >
+          Close
+        </button>
+        <img
+          :src="lightboxPoster.posterUrl"
+          :alt="lightboxPoster.title"
+          class="max-h-[80vh] w-auto object-contain border border-border shadow-2xl bg-cream"
+        />
+        <p class="mt-2 text-xs text-center text-cream-dark line-clamp-2">
+          {{ lightboxPoster.title }}
+        </p>
       </div>
     </div>
   </Teleport>
