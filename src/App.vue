@@ -5,6 +5,7 @@ import ComparisonGrid from './components/ComparisonGrid.vue'
 import TrailerModal from './components/TrailerModal.vue'
 import CinemaModal from './components/CinemaModal.vue'
 import CinemaBar from './components/CinemaBar.vue'
+import SharedIntroModal from './components/SharedIntroModal.vue'
 import { useComparison } from './composables/useComparison.js'
 import { tmdbFetch } from './utils/api.js'
 
@@ -13,6 +14,7 @@ const trailerVideoId = ref(null)
 const searchBar = ref(null)
 const stickyHeader = ref(null)
 const addFilmErrors = ref([])
+const showSharedIntro = ref(false)
 
 const CINEMA_TITLE_PREFIXES = /^(Awards?\s*Season:\s*|Secret\s*Cinema:\s*|Flashback:\s*|RE:\s*|Movies\s*for\s*Juniors:\s*)/i
 
@@ -73,8 +75,22 @@ async function onAddCinemaFilms(films) {
   }
 }
 
-onMounted(() => {
-  loadFromUrl()
+onMounted(async () => {
+  const loadedFromShare = await loadFromUrl()
+
+  if (loadedFromShare && typeof window !== 'undefined') {
+    const seenKey = 'cinema-sync-shared-intro-seen'
+    try {
+      const seen = window.localStorage.getItem(seenKey)
+      if (!seen) {
+        showSharedIntro.value = true
+        window.localStorage.setItem(seenKey, '1')
+      }
+    } catch {
+      // Ignore storage errors and just skip intro persistence
+    }
+  }
+
   if (stickyHeader.value) {
     const update = () => {
       document.documentElement.style.setProperty('--sticky-header-h', stickyHeader.value.offsetHeight + 'px')
@@ -132,6 +148,7 @@ onMounted(() => {
     <!-- Trailer Modal -->
     <TrailerModal :video-id="trailerVideoId" @close="closeTrailer" />
     <CinemaModal @add-films="onAddCinemaFilms" />
+    <SharedIntroModal :open="showSharedIntro" @close="showSharedIntro = false" />
 
     <!-- Toast: failed films -->
     <Teleport to="body">

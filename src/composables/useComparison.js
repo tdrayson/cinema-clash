@@ -59,13 +59,54 @@ function getShareMessage(truncateUrl) {
   const count = movies.value.length;
   const url = truncateUrl ? getTruncatedUrl() : getShareUrl();
   if (!count) return url;
+
   const hasShowtimes = movies.value.some((m) => {
     const st = movieShowtimes.value.get(m.id);
     return st && st.length > 0;
   });
+
+  // Derive distinct cinema locations from current showtimes
+  const cinemaNames = new Set();
   if (hasShowtimes) {
-    return `I've found some films and showtimes - have a look and let me know what works for you!\n${url}`;
+    for (const [movieId, showtimes] of movieShowtimes.value.entries()) {
+      if (!movies.value.some((m) => m.id === movieId)) continue;
+      for (const st of showtimes || []) {
+        if (st?.cinema) {
+          cinemaNames.add(st.cinema);
+        }
+      }
+    }
   }
+  const cinemaCount = cinemaNames.size;
+
+  const { selectedDate } = useCinema();
+  let datePart = '';
+  if (hasShowtimes && selectedDate.value) {
+    try {
+      const d = new Date(`${selectedDate.value}T00:00:00`);
+      const formatted = d.toLocaleDateString('en-GB', {
+        weekday: 'short',
+        day: 'numeric',
+        month: 'short',
+      });
+      datePart = ` on ${formatted}`;
+    } catch {
+      datePart = '';
+    }
+  }
+
+  let locationPart = '';
+  if (hasShowtimes && cinemaCount === 1) {
+    const [name] = cinemaNames;
+    locationPart = ` at ${name}`;
+  } else if (hasShowtimes && cinemaCount > 1) {
+    locationPart = ` at ${cinemaCount} cinemas`;
+  }
+
+  if (hasShowtimes) {
+    return `I've found some films and showtimes${datePart}${locationPart} — have a look and let me know what works for you!\n${url}`;
+  }
+
   return `I've shortlisted ${count === 1 ? 'a film' : 'some films'} to watch — what do you think?\n${url}`;
 }
 
@@ -254,13 +295,15 @@ export function useComparison() {
 
   async function loadFromUrl() {
     const params = new URLSearchParams(window.location.search);
+    let loaded = false;
 
     // Current format: ?d=<base64>
     const dParam = params.get('d');
     if (dParam) {
       try {
         await loadSharedData(parseData(dParam));
-        return;
+        loaded = true;
+        return loaded;
       } catch {
         /* invalid, fall through */
       }
@@ -271,7 +314,8 @@ export function useComparison() {
     if (hash) {
       try {
         await loadSharedData(parseData(hash));
-        return;
+        loaded = true;
+        return loaded;
       } catch {
         /* invalid, fall through */
       }
@@ -279,11 +323,14 @@ export function useComparison() {
 
     // Legacy format: ?films=550,278
     const filmsParam = params.get('films');
-    if (!filmsParam) return;
+    if (!filmsParam) return loaded;
     const ids = filmsParam.split(',').map(Number).filter(Boolean);
+    if (!ids.length) return loaded;
     for (const id of ids) {
       addMovie(id);
     }
+    loaded = true;
+    return loaded;
   }
 
   // Keep URL in sync

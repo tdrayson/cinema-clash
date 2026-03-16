@@ -5,10 +5,31 @@ import { chainIcon } from '../utils/assets.js'
 
 const { selectedCinemas, selectedDate, isActive, showModal, clear } = useCinema()
 
+function formatWithOrdinal(date) {
+  const d = date.getDate()
+  const suffix =
+    d >= 11 && d <= 13
+      ? 'th'
+      : d % 10 === 1
+        ? 'st'
+        : d % 10 === 2
+          ? 'nd'
+          : d % 10 === 3
+            ? 'rd'
+            : 'th'
+  const base = date.toLocaleDateString('en-GB', {
+    weekday: 'short',
+    day: 'numeric',
+    month: 'long',
+  })
+  // "Wed 18 March" -> "Wed 18th March"
+  return base.replace(/\b(\d{1,2})\b/, `$1${suffix}`)
+}
+
 const formattedDate = computed(() => {
   if (!selectedDate.value) return ''
   const d = new Date(selectedDate.value + 'T00:00:00')
-  return d.toLocaleDateString('en-GB', { weekday: 'short', day: 'numeric', month: 'short' })
+  return formatWithOrdinal(d)
 })
 
 const cinemaLabel = computed(() => {
