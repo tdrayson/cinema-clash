@@ -4,6 +4,7 @@ import { useCinema } from '../composables/useCinema.js'
 import { useComparison } from '../composables/useComparison.js'
 import { chainIcon } from '../utils/assets.js'
 import DatePicker from './DatePicker.vue'
+import TimePicker from './TimePicker.vue'
 
 const emit = defineEmits(['add-films'])
 
@@ -11,6 +12,7 @@ const {
   showModal,
   selectedCinemas,
   selectedDate,
+  afterTime,
   loadingCinemas,
   loadingFilms,
   mergedFilms,
@@ -82,13 +84,32 @@ const selectedCinemaCount = computed(() => selectedCinemas.value.length)
 const filterCinemaIds = ref(new Set())
 
 const visibleFilms = computed(() => {
-  if (filterCinemaIds.value.size === 0) return mergedFilms.value
-  return mergedFilms.value
-    .map(film => ({
-      ...film,
-      cinemaShowtimes: film.cinemaShowtimes.filter(cs => filterCinemaIds.value.has(cs.cinemaId)),
-    }))
-    .filter(film => film.cinemaShowtimes.length > 0)
+  let films = mergedFilms.value
+
+  if (filterCinemaIds.value.size > 0) {
+    films = films
+      .map(film => ({
+        ...film,
+        cinemaShowtimes: film.cinemaShowtimes.filter(cs => filterCinemaIds.value.has(cs.cinemaId)),
+      }))
+      .filter(film => film.cinemaShowtimes.length > 0)
+  }
+
+  if (afterTime.value) {
+    films = films
+      .map(film => ({
+        ...film,
+        cinemaShowtimes: film.cinemaShowtimes
+          .map(cs => ({
+            ...cs,
+            showtimes: cs.showtimes.filter(st => st.time >= afterTime.value),
+          }))
+          .filter(cs => cs.showtimes.length > 0),
+      }))
+      .filter(film => film.cinemaShowtimes.length > 0)
+  }
+
+  return films
 })
 
 function toggleCinemaFilter(cinemaId) {
@@ -619,8 +640,9 @@ watch(showModal, async (val) => {
 
         <!-- Step 2: Films + Date -->
         <template v-if="step === 2">
-          <div class="px-5 py-3 border-b border-border shrink-0">
+          <div class="flex items-center gap-2 px-5 py-3 border-b border-border shrink-0 flex-wrap">
             <DatePicker :model-value="selectedDate" @select="onDateSelect" />
+            <TimePicker v-model="afterTime" />
           </div>
 
           <!-- Cinema filter -->

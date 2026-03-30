@@ -1,13 +1,22 @@
-import { ref, computed } from 'vue'
+import { ref, computed, watch } from 'vue'
 import { fetchCinemas as apiFetchCinemas, fetchFilms as apiFetchFilms } from '../utils/cinema-api.js'
 
 const cinemas = ref([])
 const selectedCinemas = ref([])
 const selectedDate = ref(new Date().toISOString().split('T')[0])
+const afterTime = ref(localStorage.getItem('cinema-sync:afterTime') || '')
 const mergedFilms = ref([])
 const loadingCinemas = ref(false)
 const loadingFilms = ref(false)
 const showModal = ref(false)
+
+watch(afterTime, (val) => {
+  if (val) {
+    localStorage.setItem('cinema-sync:afterTime', val)
+  } else {
+    localStorage.removeItem('cinema-sync:afterTime')
+  }
+})
 
 let cinemasLoaded = false
 
@@ -95,6 +104,7 @@ export function useCinema() {
     cinemas,
     selectedCinemas,
     selectedDate,
+    afterTime,
     loadingCinemas,
     loadingFilms,
     showModal,
